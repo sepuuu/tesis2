@@ -1,0 +1,7 @@
+# Ignorar imágenes dentro de debug
+/debug/*.png
+/debug/**/*.jpg
+
+# Ignorar archivos de modelos (puedes ajustar si agregas más extensiones/modelos)
+codes/models/*.onnx
+codes/models/*.pth*
