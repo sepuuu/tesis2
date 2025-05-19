@@ -9,7 +9,7 @@ def train_team_classifier(video_path, model, fps):
     stride = int(fps // 7)
     crops = []
     from ultralytics import YOLO
-    PLAYER_DETECTION_MODEL = YOLO("tesis2\codes\models\players.onnx")
+    PLAYER_DETECTION_MODEL = YOLO("codes\models\players.onnx")
 
 
     for idx, fr in enumerate(get_video_frames_generator(video_path)):

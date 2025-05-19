@@ -20,18 +20,18 @@ from utils.train_team_classifier import train_team_classifier
 os.environ["CUDA_PATH"] = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.1"
 os.environ["PATH"] += os.pathsep + os.environ["CUDA_PATH"] + "\\bin"
 
-device = 'cuda'
+device = 'cpu' if not torch.cuda.is_available() else 'cuda'
 team_classifier = TeamClassifier(device=device)
 
 reid_model = torchreid.models.build_model(name='resnet50', num_classes=12, pretrained=False)
-checkpoint = torch.load('tesis2\codes\models\model.pth.tar-300', map_location=device)
+checkpoint = torch.load('codes\models\model.pth.tar-300', map_location=device)
 reid_model.load_state_dict(checkpoint['state_dict'])
 reid_model = reid_model.to(device)
 reid_model.eval()
 
-PLAYER_DETECTION_MODEL = YOLO("tesis2\codes\models\players.onnx")
-VIDEO_PATH = "tesis2\codes\inputs\prueba2.mp4"
-TARGET_VIDEO_PATH = "tesis/codes/outputs/Pruebas-output2.mov"
+PLAYER_DETECTION_MODEL = YOLO("codes\models\players.onnx")
+VIDEO_PATH = "codes\inputs\prueba2.mp4"
+TARGET_VIDEO_PATH = "codes/outputs/Pruebas-output2.mov"
 
 CONFIG = SoccerPitchConfiguration()
 pitch_renderer = PitchRenderer(
@@ -216,13 +216,13 @@ for i, frame in tqdm(enumerate(vr), total=total_frames):
     out.write(frame_with_radar)
 
 from postprocess.postprocess import process_file
-input_file = "tesis2/codes/data/Posiciones-jugadores-balon.xlsx"
+input_file = "codes/data/Posiciones-jugadores-balon.xlsx"
 posiciones_df.to_excel(input_file, index=False)
 
 process_file(
-    file_path='tesis2/codes/data/Posiciones-jugadores-balon.xlsx',
-    cleaned_output_path='tesis2/codes/data/limpieza.xlsx',
-    output_possession_path='tesis2/codes/data/posesion.xlsx',
-    output_passes_path='tesis2/codes/data/pases.xlsx',
-    output_team_passes_path='tesis2/codes/data/passes_by_{team}.xlsx'
+    file_path='codes/data/Posiciones-jugadores-balon.xlsx',
+    cleaned_output_path='codes/data/limpieza.xlsx',
+    output_possession_path='codes/data/posesion.xlsx',
+    output_passes_path='codes/data/pases.xlsx',
+    output_team_passes_path='codes/data/passes_by_{team}.xlsx'
 )
