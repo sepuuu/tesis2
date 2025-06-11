@@ -1,0 +1,77 @@
+PS C:\Users\Nicolas\Documents\GitHub\tesis2> tree /f
+Listado de rutas de carpetas
+El número de serie del volumen es 1458-13A3
+C:.
+│   .gitattributes
+│   .gitignore
+│   cuda.py
+│   README.md
+│   requirements.txt
+│   setup.bat
+│
+├───codes
+│   │   main.py
+│   │
+│   ├───configs
+│   │   │   ball.py
+│   │   │   drawing.py
+│   │   │   soccer.py
+│   │   │   team.py
+│   │   │   view_transformer.py
+│   │   │
+│   │   └───__pycache__
+│   │           ball.cpython-311.pyc
+│   │           drawing.cpython-311.pyc
+│   │           soccer.cpython-311.pyc
+│   │           team.cpython-311.pyc
+│   │           view_transformer.cpython-311.pyc
+│   │
+│   ├───data
+│   │       limpieza.xlsx
+│   │       pases.xlsx
+│   │       passes_by_equipo_blanco.xlsx
+│   │       passes_by_equipo_negro.xlsx
+│   │       posesion.xlsx
+│   │       Posiciones-jugadores-balon.xlsx
+│   │
+│   ├───inputs
+│   │       prueba2.mp4
+│   │       video_blancos_corto.mp4
+│   │       video_negros_corto.mp4
+│   │
+│   ├───models
+│   │       ball.onnx
+│   │       model.pth.tar-300
+│   │       players.onnx
+│   │       
+│   ├───outputs
+│   │       Pruebas-output2.mov
+│   │
+│   ├───postprocess
+│   │   │   postprocess.py
+│   │   │
+│   │   └───__pycache__
+│   │           postprocess.cpython-311.pyc
+│   │
+│   └───utils
+│       │   ball_setup.py
+│       │   drawing_utils.py
+│       │   tracking.py
+│       │   train_team_classifier.py
+│       │
+│       └───__pycache__
+│               ball_setup.cpython-311.pyc
+│               drawing_utils.cpython-311.pyc
+│               tracking.cpython-311.pyc
+│               train_team_classifier.cpython-311.pyc
+│
+├───debug
+│   │   cluster_scatter.png
+│   │
+│   ├───crops
+│   └───train_crops
+└───docs
+        Imagen_programa.png
+        mapa_pases.pdf
+
+PS C:\Users\Nicolas\Documents\GitHub\tesis2>

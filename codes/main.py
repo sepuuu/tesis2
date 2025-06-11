@@ -1,4 +1,6 @@
 import os
+os.environ["ORT_DISABLE_TENSORRT"] = "1"          # fuerza a ignorar TensorRT
+os.environ["ORT_TENSORRT_ENGINE_CACHE_ENABLE"] = "0"  # por si acaso
 import torchreid
 import pandas as pd
 from tqdm import tqdm
@@ -17,10 +19,7 @@ from utils.drawing_utils import draw_player_box, draw_box
 from utils.ball_setup import callback, ball_tracker
 from utils.train_team_classifier import train_team_classifier
 
-os.environ["CUDA_PATH"] = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.1"
-os.environ["PATH"] += os.pathsep + os.environ["CUDA_PATH"] + "\\bin"
-
-device = 'cpu' if not torch.cuda.is_available() else 'cuda'
+device = "cuda"
 team_classifier = TeamClassifier(device=device)
 
 reid_model = torchreid.models.build_model(name='resnet50', num_classes=12, pretrained=False)
