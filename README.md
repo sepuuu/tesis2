@@ -9,7 +9,6 @@
 - **Entrada multicámara (2 cámaras)** con homografías independientes.
 - **Fusión posicional + ReID** (evita duplicados entre cámaras).
 - **Tracker global + Roster (IDs 1..11)** con confirmación y reciclaje.
-- **Asignación manual de equipos por ID** y coloreado consistente (cajas y radar).
 - **Radar + Voronoi** con:
   - **Contornos visibles** y **sitios con anillo**.
   - **Anti-parpadeo** (puntos “pegados” ~1s) para estabilidad al perder detecciones breves.
