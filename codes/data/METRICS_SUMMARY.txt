@@ -1,0 +1,10 @@
+Frames: 928
+FPS promedio: 1.101
+Detecciones promedio por frame: 21.92
+Fused promedio por frame: 20.04
+Tracks promedio por frame: 20.04
+Dibujados (roster confirmados) promedio: 10.52
+Puntos Voronoi promedio: 10
+Puntos ‘pegados’ (anti-parpadeo) promedio: 0.46
+Duplicados residuales promedio (pares cercanos): 0.00
+ID switches totales: 340

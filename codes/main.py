@@ -29,7 +29,7 @@ reid_model = reid_model.to(device)
 reid_model.eval()
 
 PLAYER_DETECTION_MODEL = YOLO("codes\models\players.onnx")
-VIDEO_PATH = "codes\inputs\prueba2.mp4"
+VIDEO_PATH = "codes/inputs/video_negros_corto.mp4"
 TARGET_VIDEO_PATH = "codes/outputs/Pruebas-output2.mov"
 
 CONFIG = SoccerPitchConfiguration()
