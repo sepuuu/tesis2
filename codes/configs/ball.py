@@ -37,6 +37,10 @@ class BallTracker(BallBuffer):
         distances = np.linalg.norm(positions - centroid, axis=1)
         return detections[[np.argmin(distances)]]
 
+    # Compatibilidad: la mayoría del código llama a `update`
+    def update(self, detections: sv.Detections) -> sv.Detections:
+        return self.filter_detections(detections)
+
 class BallAnnotator(BallBuffer):
     """Anotador vectorizado con gestión de colores optimizada."""
     

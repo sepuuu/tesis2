@@ -1,0 +1,20 @@
+# Ultralytics YOLO tracker settings (BoT-SORT) - NO CONFUSION (prioriza 0 ID-switch, acepta fragmentación)
+tracker_type: botsort  # ['botsort', 'bytetrack']
+
+# Asociación por confianza (más estricto => menos matches dudosos => más cortes)
+track_high_thresh: 0.35   # 1st association (solo detecciones fuertes)
+track_low_thresh: 0.35    # igual que high => prácticamente desactiva 2nd association tipo ByteTrack
+new_track_thresh: 0.45    # crear tracks nuevos solo si la detección es bien confiable
+
+# Persistencia ante oclusiones (más bajo => si desaparece, "muere" rápido => al volver obtiene ID nuevo)
+track_buffer: 20          # ~0.6s @30fps (se escala por FPS)
+
+# Matching (más alto => más estricto => menos switches)
+match_thresh: 0.95
+fuse_score: True
+
+# BoT-SORT extras
+gmc_method: sparseOptFlow
+proximity_thresh: 0.65    # exigir más solapamiento espacial (más estricto)
+appearance_thresh: 0.25   # solo relevante si with_reid=True
+with_reid: False

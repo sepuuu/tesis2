@@ -1,6 +1,7 @@
 import os
 import cv2
 import supervision as sv
+import config
 from utils.drawing_utils import get_video_frames_generator
 
 
@@ -9,7 +10,12 @@ def train_team_classifier(video_path, model, fps):
     stride = int(fps // 7)
     crops = []
     from ultralytics import YOLO
-    PLAYER_DETECTION_MODEL = YOLO("codes\models\players.onnx")
+    player_detector_path = config.PATHS.player_detector_path
+    if not os.path.exists(player_detector_path):
+        raise FileNotFoundError(
+            f"No se encontro el detector de jugadores en: {player_detector_path}"
+        )
+    PLAYER_DETECTION_MODEL = YOLO(player_detector_path)
 
 
     for idx, fr in enumerate(get_video_frames_generator(video_path)):

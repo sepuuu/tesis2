@@ -5,6 +5,9 @@ from typing import List, Tuple, Dict, Optional
 from configs.soccer import SoccerPitchConfiguration
 import supervision as sv
 
+_renderer_cache: Dict[Tuple, "PitchRenderer"] = {}
+
+
 class PitchRenderer:
 
     
@@ -101,3 +104,88 @@ class PitchRenderer:
         
         # Combinar con transparencia
         return cv2.addWeighted(voronoi_layer, 0.3, pitch, 0.7, 0)
+
+
+def _get_renderer(
+    config: SoccerPitchConfiguration,
+    scale: float = 0.1,
+    padding: int = 50,
+    background_color: sv.Color = sv.Color(34, 139, 34),
+    line_color: sv.Color = sv.Color.WHITE,
+) -> PitchRenderer:
+    cache_key = (
+        config.width,
+        config.length,
+        config.penalty_box_width,
+        config.penalty_box_length,
+        config.goal_box_width,
+        config.goal_box_length,
+        config.centre_circle_radius,
+        config.penalty_spot_distance,
+        scale,
+        padding,
+        tuple(background_color.as_bgr()),
+        tuple(line_color.as_bgr()),
+    )
+    renderer = _renderer_cache.get(cache_key)
+    if renderer is None:
+        renderer = PitchRenderer(
+            config=config,
+            scale=scale,
+            padding=padding,
+            background_color=background_color,
+            line_color=line_color,
+        )
+        _renderer_cache[cache_key] = renderer
+    return renderer
+
+
+def draw_pitch(
+    config: SoccerPitchConfiguration,
+    scale: float = 0.1,
+    padding: int = 50,
+    background_color: sv.Color = sv.Color(34, 139, 34),
+    line_color: sv.Color = sv.Color.WHITE,
+) -> np.ndarray:
+    renderer = _get_renderer(
+        config=config,
+        scale=scale,
+        padding=padding,
+        background_color=background_color,
+        line_color=line_color,
+    )
+    return renderer.base_pitch.copy()
+
+
+def draw_points_on_pitch(
+    config: SoccerPitchConfiguration,
+    xy: np.ndarray,
+    face_color,
+    pitch: Optional[np.ndarray] = None,
+    scale: float = 0.1,
+    padding: int = 50,
+    background_color: sv.Color = sv.Color(34, 139, 34),
+    line_color: sv.Color = sv.Color.WHITE,
+) -> np.ndarray:
+    renderer = _get_renderer(
+        config=config,
+        scale=scale,
+        padding=padding,
+        background_color=background_color,
+        line_color=line_color,
+    )
+    color = face_color.as_bgr() if hasattr(face_color, "as_bgr") else face_color
+    output_pitch = pitch.copy() if pitch is not None else renderer.base_pitch.copy()
+
+    if xy is None:
+        return output_pitch
+
+    for point in xy:
+        x, y = point
+        pt = (
+            int(x * renderer.scale) + renderer.padding,
+            int(y * renderer.scale) + renderer.padding,
+        )
+        cv2.circle(output_pitch, pt, 8, color, -1)
+
+    return output_pitch

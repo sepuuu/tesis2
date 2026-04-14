@@ -1,0 +1,21 @@
+tracker_type: botsort
+
+# confiabilidad alta, sin segunda asociación
+track_high_thresh: 0.50
+track_low_thresh: 0.50   # desactiva 2nd association
+new_track_thresh: 0.60
+
+track_buffer: 10         # muere rápido; reaparece = ID nuevo
+match_thresh: 0.65
+fuse_score: True
+
+# gating espacial más estricto
+proximity_thresh: 0.80
+appearance_thresh: 0.25
+
+# ReID opcional (descomenta si quieres probarlo)
+with_reid: False
+# model: auto  # o ruta a modelo reid si lo habilitas
+
+# GMC (motion compensado). 'none' para evitar optflow erróneo
+gmc_method: none         # opciones: sparseOptFlow/orb/ecc/none

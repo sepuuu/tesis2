@@ -6,6 +6,13 @@
 codes/models/*.onnx
 codes/models/*.pth*
 
-
+# Ignorar entorno y archivos de caché de Python
 env/
 *.pyc
+
+# Ignorar archivos de Excel
+*.xlsx
+
+# Ignorar archivos de video
+*.mov
+*.mp4
