@@ -1,152 +1,309 @@
-# ⚽️ Análisis de Video de Fútbol usando Visión por Computadora 🧠📊
+# Analisis Multicam de Futbol con Vision por Computadora
 
-¡Bienvenido al proyecto de **Obtención de mapa de pases utilizando Visión por Computadora**! Este proyecto de título aplica técnicas de visión por computadora para analizar partidos de fútbol: detecta jugadores y balón, realiza re-identificación (ReID), proyecta a un **plano de cancha** y construye un **radar con Voronoi** **estable**. Además, genera artefactos para análisis táctico: posiciones, métricas y (opcional) mapas de pases.
+Proyecto de titulo para analisis tactico de futbol usando deteccion, tracking, ReID, proyeccion a cancha y render final multicamara.
 
----
+El flujo actual del proyecto ya no gira en torno a ejecutar un `main.py` unico. La entrada recomendada es [`codes/run_pipeline.py`](codes/run_pipeline.py), que orquesta export, stitching, matching entre camaras, revision manual-visual y render final.
 
-## 🚀 Estado actual (septiembre 2025)
+![Ejemplo del analisis](docs/Imagen_programa.png)
 
-- **Entrada multicámara (2 cámaras)** con homografías independientes.
-- **Fusión posicional + ReID** (evita duplicados entre cámaras).
-- **Tracker global + Roster (IDs 1..11)** con confirmación y reciclaje.
-- **Radar + Voronoi** con:
-  - **Contornos visibles** y **sitios con anillo**.
-  - **Anti-parpadeo** (puntos “pegados” ~1s) para estabilidad al perder detecciones breves.
-- **Salida única en MP4** (side-by-side de ambas cámaras con radar/Veronoi incrustado en Cam1).
-- **Export a Excel** de posiciones por frame (jugadores + balón).
-- **Métricas por frame** (FPS, detecciones, fusión, tracks, dibujados, puntos “pegados”, duplicados, ID switches) con resumen.
+## Resumen
 
-![Ejemplo del análisis de video](docs/Imagen_programa.png)
+El pipeline actual hace lo siguiente:
 
----
+- Detecta jugadores y balon en dos camaras.
+- Trackea por camara y exporta artefactos intermedios.
+- Une tracklets fragmentados dentro de cada camara.
+- Calcula un mapping global entre camaras.
+- Genera una etapa de revision manual-visual para corregir IDs.
+- Recalcula el mapping final y renderiza el video final con GIDs corregidos.
 
-## 🎯 Objetivos
+## Flujo actual del pipeline
 
-Proveer un **pipeline robusto** para análisis táctico con:
-- Seguimiento multicámara y proyección a cancha.
-- Radar con Voronoi **legible y estable**.
-- Artefactos reproducibles: **MP4 único** + **Excel** + **métricas**.
-- (Opcional) generación de **mapas de pases**.
-
----
-
-## 🛠️ Tecnologías utilizadas
-- **YOLO** (export ONNX) para detección (jugadores y balón).
-- **TorchReID** para embeddings de re-identificación.
-- **Decord** para lectura de video, **OpenCV** para homografía/Voronoi y composición.
-- **Numpy/Pandas** para datos y export a Excel.
-- Proyecto probado en **Python 3.11**.
-
----
-
-## 🧪 Resultados y artefactos
-Al ejecutar el pipeline se generan:
-- **Video**: `codes/outputs/Pruebas-output-final.mp4` (side-by-side; radar+Voronoi en Cam1).
-- **Excel**: `codes/data/Posiciones-jugadores-balon-multicam.xlsx` (Frame, Id, PosX, PosY, BallX, BallY).
-- **Métricas**: `codes/data/METRICS.csv` (por frame) y `codes/data/METRICS_SUMMARY.txt` (resumen).
-
-**Ejemplo de Mapa de Pases (opcional):**  
-[🔗 Ver Mapa de Pases (PDF)](docs/mapa_pases.pdf)
-
----
-
-## 📦 Preparación de entorno
+Entrada recomendada:
 
 ```bash
-# Python 3.11 recomendado
+python codes/run_pipeline.py
+```
+
+Secuencia real:
+
+1. `export`
+   Ejecuta `main_dualcam.py` con `PIPELINE_STAGE=export`.
+   Genera tracking bruto por camara, detecciones del balon, metricas y artefactos base.
+
+2. `offline_stitch`
+   Ejecuta `offline_stitch.py`.
+   Une tracklets fragmentados dentro de cada camara y genera CSV stitched.
+
+3. `offline_crosscam`
+   Ejecuta `offline_crosscam.py`.
+   Propone un primer mapping global entre `cam1` y `cam2`.
+
+4. `manual_review`
+   Ejecuta `manual_review.py`.
+   Genera artefactos visuales en `RUN_DIR/debug_viz/`, prepara `manual_overrides.json` y, si la consola es interactiva, pausa el pipeline para que puedas revisar y editar los overrides.
+
+5. `offline_crosscam` final
+   Se ejecuta nuevamente para reaplicar `manual_overrides.json` y reconstruir el mapping global final.
+
+6. `render`
+   Ejecuta `main_dualcam.py` con `PIPELINE_STAGE=render`.
+   Usa los tracks stitched y el mapping corregido para exportar el video final.
+
+## Estructura importante del repo
+
+```text
+codes/
+  config.py
+  run_pipeline.py
+  main_dualcam.py
+  offline_stitch.py
+  offline_crosscam.py
+  manual_review.py
+  debug_viz.py
+  configs/
+  utils/
+  postprocess/
+  inputs/
+  models/
+  outputs/
+runs/
+  default/
+docs/
+```
+
+## Requisitos
+
+- Python 3.11 recomendado
+- Dependencias en `requirements.txt`
+
+Instalacion:
+
+```bash
 pip install -r requirements.txt
 ```
 
-Estructura de carpetas recomendada:
-```
-codes/
-  inputs/                       # Videos de entrada (Cam1, Cam2)
-  outputs/                      # Salidas (MP4)
-  models/                       # Pesos (players.onnx, ball.onnx, model.pth.tar-300)
-  data/                         # Artefactos (Excel, métricas)
-configs/
-  drawing.py
-  soccer.py
-  view_transformer.py
-utils/
-  drawing_utils.py
-  ball_setup.py
-  tracking.py
-  team.py
-  train_team_classifier.py
-main_dualcam.py
-```
+Tambien puedes usar:
 
----
-
-## ▶️ Cómo usar el proyecto
-
-1. Asegúrate de tener los modelos en `codes/models/`:
-   - `players.onnx` (jugadores)
-   - `ball.onnx` (balón)
-   - `model.pth.tar-300` (ReID)
-
-2. Coloca los videos en `codes/inputs/`:
-   - `video_blancos_corto.mp4` (Cam1)
-   - `video_negros_corto.mp4` (Cam2)
-
-3. Ejecuta:
 ```bash
-python main_dualcam.py
+setup.bat
 ```
 
-4. Revisa los resultados:
-   - Video anotado: `codes/outputs/Pruebas-output-final.mp4`
-   - Excel: `codes/data/Posiciones-jugadores-balon-multicam.xlsx`
-   - Métricas: `codes/data/METRICS.csv`, `codes/data/METRICS_SUMMARY.txt`
+## Archivos esperados
 
----
+Por defecto, `codes/config.py` espera estos archivos:
 
-## 📂 Archivos Faltantes
+- Videos:
+  - `codes/inputs/video_largo_blancos_nuevo.mp4`
+  - `codes/inputs/video_largo_negros_nuevo.mp4`
+- Modelos:
+  - `codes/models/players.onnx`
+  - `codes/models/ball.onnx`
+  - `codes/models/model.pth.tar-300`
 
-El proyecto requiere algunos archivos adicionales que no están incluidos directamente en el repositorio debido a su tamaño. A continuación, se listan los archivos necesarios junto con sus enlaces de descarga y su ubicación esperada dentro del proyecto:
+Si tus archivos tienen otro nombre o ubicacion, ajusta las rutas en [`codes/config.py`](codes/config.py).
 
-### 1. **Modelo de Re-ID**
-Este modelo es esencial para la reidentificación de los jugadores durante el análisis de los videos.
+## Salidas principales
 
-**Descarga aquí**: [🔗 Descargar Modelo de Re-ID](https://drive.google.com/file/d/1WUUdcJ29A11i1zoipnq7mqQZeR84V_PV/view?usp=sharing)
+El pipeline escribe la mayor parte de sus artefactos en `RUN_DIR`, que por defecto es:
 
-**Ubicación esperada:**  
-Coloca este archivo en la carpeta `models/` (crea esta carpeta si no existe).
+```text
+runs/default/
+```
 
-### 2. **Video para Pruebas**
-Utiliza este video para probar el pipeline completo del proyecto.
+Artefactos importantes por etapa:
 
-**Descarga aquí**: [🔗 Descargar Video de Prueba](https://drive.google.com/file/d/1vVypn9X0mfgurgtj4fmnpGnsMn8SDMpw/view?usp=drive_link)
+- Export:
+  - `c1_tracks.csv`
+  - `c2_tracks.csv`
+  - `ball.csv`
+  - `METRICS.csv`
+  - `Posiciones-jugadores-balon-multicam.xlsx`
+  - `meta.json`
 
-**Ubicación esperada:**  
-Coloca este archivo en la carpeta `videos/` (crea esta carpeta si no existe).
+- Stitch:
+  - `c1_tracks_stitched.csv`
+  - `c2_tracks_stitched.csv`
+  - `c1_stitched_embeddings.npz`
+  - `c2_stitched_embeddings.npz`
+  - `c1_map_stitch.json`
+  - `c2_map_stitch.json`
+  - `report_stitch.csv`
 
----
+- Crosscam:
+  - `crosscam_map.json`
+  - `report_crosscam.csv`
+  - `report_crosscam_summary.csv`
+  - `global_tracks.csv`
+  - `crosscam_align.json`
 
-## ⚠️ Estado del proyecto
+- Revision manual-visual:
+  - `debug_viz/`
+  - `manual_overrides.json`
+  - `manual_overrides.template.json`
+  - `manual_review_instructions.txt`
 
-El proyecto está en desarrollo. Las **instrucciones detalladas** de configuración y los **scripts de generación de mapas de pases** se añadirán más adelante; de momento, sigue los pasos indicados en este README.
+- Render final:
+  - Video final en la ruta configurada por `PATHS.video_output`
+  - Video con IDs locales
+  - Video del radar
 
----
+Por defecto, el video final queda en:
 
-## 👥 Autores
+```text
+codes/outputs/Pruebas-output-final.mp4
+```
 
-- **Matías Millacura** - [@matiasmillacura](https://github.com/matiasmillacura)
-- **Matías Sepúlveda** - [@sepuuu](https://github.com/sepuuu)
----
+Si activas `ALSO_WRITE_CODES_DATA = True` en `config.py`, tambien se escriben copias de algunos artefactos en `codes/data/`.
 
-## Configuracion ajustable
+## Revision manual-visual
 
-Los archivos de la carpeta `codes/configs/` concentran los parametros mas comunes que vas a querer ajustar antes de correr `main_dualcam.py`. Aprovecha el siguiente resumen para saber donde tocar cada cosa:
+La revision manual ya forma parte del pipeline.
 
-| Archivo | Ruta | Para que sirve | Parametros que puedes ajustar |
-| --- | --- | --- | --- |
-| `soccer.py` | `codes/configs/soccer.py` | Define la geometria base de la cancha (largo, ancho y vertices usados para dibujar las lineas). | Modifica `width`, `length`, los campos `penalty_box_*` y las listas `vertices` / `edges` si trabajas con otra escala o layout. |
-| `view_transformer.py` | `codes/configs/view_transformer.py` | Calcula la homografia imagen->cancha. | Ajusta en `main_dualcam.py` los arrays `points_img*` y `points_pitch*` para cada camara; esta clase aplica la transformacion resultante. |
-| `drawing.py` | `codes/configs/drawing.py` | Renderiza el radar y las capas Voronoi. | En `PitchRenderer` puedes cambiar `scale`, `padding`, `background_color`, `line_color` para adaptar el mini mapa. |
-| `team.py` | `codes/configs/team.py` | Clasificador de equipacion (SigLIP + UMAP + KMeans) y logica de locking. | Tunea `use_umap`, `umap_components`, `vote_window`, `tight_lock_p`, `low_conf_thr` o usa `manual_lock` para fijar resultados manuales. |
-| `ball.py` | `codes/configs/ball.py` | Buffers, tracker y anotador de la trayectoria del balon. | Ajusta `buffer_size`, `max_radius`, `thickness` para suavizar o resaltar la estela del balon. |
+Durante `manual_review` se generan videos e imagenes en:
 
-> Sugerencia: despues de tocar la configuracion limpia o regenera los artefactos en `codes/data/` y vuelve a ejecutar `python codes/main_dualcam.py` para validar el efecto.
+```text
+runs/default/debug_viz/
+```
 
+Por defecto se generan estos artefactos visuales:
+
+- `04_render_radar_all_with_gid.mp4`
+- `05_crosscam_pair_error_lines.mp4`
+- `08_combined_cams_gid.mp4`
+- `09_combined_teams_gid.mp4`
+- `10_voronoi_radar_teams.mp4`
+
+Ademas se crea un archivo editable:
+
+```text
+runs/default/manual_overrides.json
+```
+
+Formato esperado:
+
+```json
+{
+  "players": {
+    "1": { "cam1": [1, 38], "cam2": [4] },
+    "2": { "cam1": [5], "cam2": [7, 9] }
+  },
+  "special_segments": {
+    "cam1": [],
+    "cam2": []
+  }
+}
+```
+
+Interpretacion:
+
+- La clave `"1"` o `"2"` es el GID final que quieres imponer.
+- `cam1` y `cam2` contienen los `stable_id` stitched que pertenecen a ese jugador.
+- `special_segments` es opcional y hoy se usa principalmente en `debug_viz.py` para casos por rango de frames.
+
+Si ejecutas el pipeline en una consola interactiva, el proceso pausa antes del render final para que puedas revisar los videos y editar `manual_overrides.json`.
+
+## Como usar
+
+1. Deja los modelos en `codes/models/`.
+2. Deja los videos en `codes/inputs/`.
+3. Ajusta rutas o nombres en [`codes/config.py`](codes/config.py) si es necesario.
+4. Ejecuta:
+
+```bash
+python codes/run_pipeline.py
+```
+
+5. Revisa los artefactos en `runs/default/`.
+6. Si el pipeline pausa en `manual_review`, revisa `runs/default/debug_viz/`, edita `runs/default/manual_overrides.json` y luego continua.
+
+## Postproceso opcional
+
+El proyecto todavia conserva un postproceso en [`codes/postprocess/postprocess.py`](codes/postprocess/postprocess.py) para posesion, pases y mapas derivados.
+
+Ese postproceso no es la entrada principal del pipeline actual. Si lo usas, revisa primero que las columnas esperadas por el postproceso coincidan con los artefactos que estas exportando.
+
+## Configuracion util
+
+La mayor parte de los ajustes esta en [`codes/config.py`](codes/config.py).
+
+Bloques utiles:
+
+- Rutas:
+  - `PATHS.video_cam1`
+  - `PATHS.video_cam2`
+  - `PATHS.video_output`
+  - `PATHS.reid_checkpoint`
+  - `PATHS.player_detector_path`
+  - `PATHS.ball_detector_path`
+
+- Pipeline:
+  - `RUN_DIR`
+  - `OFFLINE_MAP_PATH`
+  - `PIPELINE_ENABLE_MANUAL_REVIEW`
+  - `PIPELINE_MANUAL_REVIEW_PAUSE`
+  - `PIPELINE_MANUAL_REVIEW_RERUN_CROSSCAM`
+
+- Render / export:
+  - `RENDER_USE_STITCHED`
+  - `RENDER_MAPPED_ONLY`
+  - `RAW_POS_MODE`
+
+- Crosscam:
+  - `CROSSCAM_POS_THR`
+  - `CROSSCAM_REID_THR`
+  - `CROSSCAM_ACCEPT_MARGIN`
+  - `CROSSCAM_ENABLE_ALIGN`
+
+- Debug visual:
+  - `DEBUG_VIZ_VIDEO_TARGETS`
+  - `DEBUG_APPROX_SECOND`
+  - `DEBUG_FRAME_WINDOW`
+
+## Comandos utiles
+
+Pipeline completo:
+
+```bash
+python codes/run_pipeline.py
+```
+
+Solo stitching:
+
+```bash
+python codes/offline_stitch.py
+```
+
+Solo crosscam:
+
+```bash
+python codes/offline_crosscam.py
+```
+
+Solo revision visual:
+
+```bash
+python codes/manual_review.py --no-pause
+```
+
+Solo debug visual:
+
+```bash
+python codes/debug_viz.py
+```
+
+## Nota sobre el estado del proyecto
+
+El repositorio esta en desarrollo y conserva algunas piezas heredadas del flujo anterior. Si algo en el README parece contradecir el comportamiento real del codigo, toma como fuente principal:
+
+- `codes/config.py`
+- `codes/run_pipeline.py`
+- `codes/main_dualcam.py`
+- `codes/offline_stitch.py`
+- `codes/offline_crosscam.py`
+- `codes/manual_review.py`
+
+## Autores
+
+- Matias Millacura - [@matiasmillacura](https://github.com/matiasmillacura)
+- Matias Sepulveda - [@sepuuu](https://github.com/sepuuu)
